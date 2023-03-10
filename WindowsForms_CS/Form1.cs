@@ -10,6 +10,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using WindowsForms_CS.Clases;
+using static System.Net.WebRequestMethods;
 
 namespace WindowsForms_CS
 {
@@ -29,9 +30,19 @@ namespace WindowsForms_CS
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            if (!File.Exists(ruta.FileName))
+            var resultado = MessageBox.Show("Quieres empezar con un archivo anterior?", "???", MessageBoxButtons.YesNo);
+            if (resultado == DialogResult.No)
             {
-                pnlFormularioOrganizado.Visible = false;
+                return;
+            }
+            ruta = new SaveFileDialog()
+            {
+                Filter = "txt files (*.txt) | *.txt | All files (*.*) | *.*",
+                Title = "Guardando tus datos"
+            };
+            if (ruta.ShowDialog() == DialogResult.Cancel)
+            {
+                MessageBox.Show("Error al escoger la ruta de archivo. ", "Error", MessageBoxButtons.OK);
                 return;
             }
             using (leerArchivo = new StreamReader(ruta.FileName))
@@ -46,21 +57,15 @@ namespace WindowsForms_CS
             }
         }
 
-        private void Form1_FormClosing(object sender, FormClosingEventArgs e)
+        private void Form1_FormClosing_1(object sender, FormClosingEventArgs e)
         {
-            if (!File.Exists(ruta.FileName))
+            ruta = new SaveFileDialog();
+            ruta.Filter = "txt files (*.txt) | *.txt | All files (*.*) | *.*";
+            ruta.Title = "Guardando tus datos";
+            if (ruta.ShowDialog() == DialogResult.Cancel)
             {
-                ruta = new SaveFileDialog()
-                {
-                    Filter = "txt files (*.txt) | *.txt | All files (*.*) | *.*",
-                    Title = "Guardando tus datos"
-                };
-
-                if (ruta.ShowDialog() == DialogResult.Cancel)
-                {
-                    MessageBox.Show("Error al escoger la ruta de archivo. ", "Error", MessageBoxButtons.OK);
-                    return;
-                }
+                MessageBox.Show("Error al escoger la ruta de archivo. ", "Error", MessageBoxButtons.OK);
+                return;
             }
 
             using (escribirArchivo = new StreamWriter(ruta.FileName))
@@ -77,7 +82,7 @@ namespace WindowsForms_CS
             }
         }
 
-        private void btnEnviarDatos_Click(object sender, EventArgs e)
+        private void btnEnviarDatos_Click_1(object sender, EventArgs e)
         {
             if (string.IsNullOrEmpty(txtNombre.Text) || txtNombre.Text == null)
             {
@@ -126,7 +131,6 @@ namespace WindowsForms_CS
                 MessageBox.Show("Debe ingresar todos los datos correctamente.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            pnlFormularioOrganizado.Visible = true;
 
             // Le doy memoria a la persona (contacto) desde el primer índice.
             personas[nn] = new Contacto
@@ -138,7 +142,8 @@ namespace WindowsForms_CS
                 Correo = txtCorreo.Text,
                 FechaNacimiento = dtpFechaNacimiento.Value
             };
-
+            Edad1(personas[nn].Edad);
+            Edad1();
             // Parte del programa que se encarga de imprimir los datos en el DataGridView.
             dgvDatosFormulario.Rows.Add(nn + 1, personas[nn].Nombre, personas[nn].APPaterno, personas[nn].APMaterno, personas[nn].Telefono, personas[nn].Correo, personas[nn].FechaNacimiento, personas[nn].Edad);
             nn += 1;
@@ -150,30 +155,44 @@ namespace WindowsForms_CS
             txtCorreo.Clear();
             dtpFechaNacimiento.ResetText();
         }
-            // Este botón elimina la celda seleccionada.
-            private void btnEliminar_Click(object sender, EventArgs e)
+        // Este botón elimina la celda seleccionada.
+        private void btnEliminar_Click(object sender, EventArgs e)
+        {
+            // Si la cantidad de filas dentro del DataGridView es mayor que cero, se puede seguir eliminando.
+            if (dgvDatosFormulario.Rows.Count > 0)
             {
-                // Si la cantidad de filas dentro del DataGridView es mayor que cero, se puede seguir eliminando.
-                if (dgvDatosFormulario.Rows.Count > 0)
-                {
-                    // Eliminar cada fila seleccionada.
-                    foreach (DataGridViewRow fila in dgvDatosFormulario.SelectedRows)
-                        dgvDatosFormulario.Rows.Remove(fila);
-                }
-                else
-                    MessageBox.Show("No hay más elementos que eliminar en este apartado.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // Eliminar cada fila seleccionada.
+                foreach (DataGridViewRow fila in dgvDatosFormulario.SelectedRows)
+                    dgvDatosFormulario.Rows.Remove(fila);
             }
+            else
+               MessageBox.Show("No hay más elementos que eliminar en este apartado.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
 
-            private void Form1_KeyDown(object sender, KeyEventArgs e)
+        private void Form1_KeyDown(object sender, KeyEventArgs e)
+        {
+            // Verificar si se ha presionado la tecla "Enter".
+            if (e.KeyCode == Keys.Enter)
             {
-                // Verificar si se ha presionado la tecla "Enter".
-                if (e.KeyCode == Keys.Enter)
-                {
-                    // Verificar si el control activo es un TextBox.
-                    if (this.ActiveControl is TextBox)
-                        // Establecer el enfoque en el siguiente TextBox.
-                        this.SelectNextControl(this.ActiveControl, true, true, true, true);
-                }
+                // Verificar si el control activo es un TextBox.
+                if (this.ActiveControl is TextBox)
+                    // Establecer el enfoque en el siguiente TextBox.
+                    this.SelectNextControl(this.ActiveControl, true, true, true, true);
             }
         }
+
+        public void Edad1(int x)
+        {
+            if (x >= 18)
+                MessageBox.Show("Eres mayor de edad", "Edad", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            if (x < 18)
+                MessageBox.Show("Eres menor de edad", "Edad", MessageBoxButtons.OK, MessageBoxIcon.Exclamation);
+        }
+        public void Edad1()
+        {
+            MessageBox.Show("El ser mayor de edad deja menos sospechas en cuanto los datos que proporciones");
+        }
+
+     
+    }
 }
